@@ -1,5 +1,10 @@
 <template>
 	<view class="body">
+		<div class="top">
+			<span class="card">分数：{{score}}</span>
+			<span class="card">历史最高：{{historyScore}}</span>
+		</div>
+		<div class="button" @click="start">重新开始</div>
 		<view class="container">
 			<view class="item" :class="item !== 0 ? 'hide':''" v-for="(item,index) in matrix" :key="index"></view>
 		</view>
@@ -22,6 +27,8 @@
 				startY: 0,
 				endX: 0,
 				endY: 0,
+				score: 0,
+				historyScore: uni.getStorageSync('historyScore')
 			}
 		},
 		onLoad() {
@@ -29,6 +36,18 @@
 			this.getRandomNumber()
 		},
 		methods: {
+			start() {
+				this.matrix = Array.from({
+					length: 16
+				}, () => 0)
+				this.startX = 0
+				this.startY = 0
+				this.endX = 0
+				this.endY = 0
+				this.score = 0
+				this.getRandomNumber()
+				this.getRandomNumber()
+			},
 			getRandomNumber() {
 				const emptyCells = []
 				this.matrix.forEach((item, index) => {
@@ -42,161 +61,55 @@
 				}
 			},
 			moveLeft() {
-				let result = [];
-				for (let i = 0; i < this.matrix.length; i += 4) {
-					let row = this.matrix.slice(i, i + 4);
-					// 移动非零元素到数组左侧
-					row = row.filter(val => val !== 0); // 过滤掉数组中的零元素
-					while (row.length < 4) {
-						row.push(0); // 将零补齐到数组长度为4
-					}
-
-					// 合并相同元素
-					for (let i = 0; i < 3; i++) {
-						if (row[i] === row[i + 1]) {
-							row[i] *= 2;
-							row[i + 1] = 0;
-						}
-					}
-
-					// 再次移动非零元素到数组左侧
-					row = row.filter(val => val !== 0);
-					while (row.length < 4) {
-						row.push(0);
-					}
-
-					result = result.concat(row);
-				}
-				if (JSON.stringify(this.matrix) !== JSON.stringify(result)) {
-					this.matrix = result;
-					this.getRandomNumber();
-				}
+				let newArr = this.leftCoreCode(this.matrix);
+				this.randomGeneration(newArr)
 			},
 			moveRight() {
-				let result = [];
-				for (let i = 0; i < this.matrix.length; i += 4) {
-					let row = this.matrix.slice(i, i + 4);
-					// 移动非零元素到数组右侧
-					row = row.filter(val => val !== 0); // 过滤掉数组中的零元素
-					while (row.length < 4) {
-						row.unshift(0); // 将零补齐到数组长度为4
-					}
-
-					// 合并相同元素
-					for (let i = 3; i > 0; i--) {
-						if (row[i] === row[i - 1]) {
-							row[i] *= 2;
-							row[i - 1] = 0;
-						}
-					}
-
-					// 再次移动非零元素到数组左侧
-					row = row.filter(val => val !== 0);
-					while (row.length < 4) {
-						row.unshift(0);
-					}
-
-					result = result.concat(row);
-				}
-				if (JSON.stringify(this.matrix) !== JSON.stringify(result)) {
-					this.matrix = result;
-					this.getRandomNumber();
-				}
+				let newArr = this.rightCoreCode(this.matrix);
+				this.randomGeneration(newArr)
 			},
 			moveUp() {
 				let newArr = []
-				let resArr = []
 				for (let i = 0; i < 4; i++) {
 					for (let j = i; j < this.matrix.length; j += 4) {
 						newArr.push(this.matrix[j]);
 					}
 				}
 
-				let result = [];
-				for (let i = 0; i < newArr.length; i += 4) {
-					let row = newArr.slice(i, i + 4);
-					// 移动非零元素到数组左侧
-					row = row.filter(val => val !== 0); // 过滤掉数组中的零元素
-					while (row.length < 4) {
-						row.push(0); // 将零补齐到数组长度为4
-					}
+				let resArr = this.leftCoreCode(newArr)
 
-					// 合并相同元素
-					for (let i = 0; i < 3; i++) {
-						if (row[i] === row[i + 1]) {
-							row[i] *= 2;
-							row[i + 1] = 0;
-						}
-					}
-
-					// 再次移动非零元素到数组左侧
-					row = row.filter(val => val !== 0);
-					while (row.length < 4) {
-						row.push(0);
-					}
-
-					result = result.concat(row);
-				}
+				let arr = []
 
 				for (let i = 0; i < 4; i++) {
-					for (let j = i; j < result.length; j += 4) {
-						resArr.push(result[j]);
+					for (let j = i; j < resArr.length; j += 4) {
+						arr.push(resArr[j]);
 					}
 				}
 
-				if (JSON.stringify(this.matrix) !== JSON.stringify(resArr)) {
-					this.matrix = resArr;
-					this.getRandomNumber();
-				}
+				this.randomGeneration(arr)
 
 			},
 			moveDown() {
 				let newArr = []
-				let resArr = []
 				for (let i = 0; i < 4; i++) {
 					for (let j = i; j < this.matrix.length; j += 4) {
 						newArr.push(this.matrix[j]);
 					}
 				}
 
-				let result = [];
-				for (let i = 0; i < newArr.length; i += 4) {
-					let row = newArr.slice(i, i + 4);
-					// 移动非零元素到数组左侧
-					row = row.filter(val => val !== 0); // 过滤掉数组中的零元素
-					while (row.length < 4) {
-						row.unshift(0); // 将零补齐到数组长度为4
-					}
+				let resArr = this.rightCoreCode(newArr)
 
-					// 合并相同元素
-					for (let i = 3; i > 0; i--) {
-						if (row[i] === row[i - 1]) {
-							row[i] *= 2;
-							row[i - 1] = 0;
-						}
-					}
-
-					// 再次移动非零元素到数组左侧
-					row = row.filter(val => val !== 0);
-					while (row.length < 4) {
-						row.unshift(0);
-					}
-
-					result = result.concat(row);
-				}
+				let arr = []
 
 				for (let i = 0; i < 4; i++) {
-					for (let j = i; j < result.length; j += 4) {
-						resArr.push(result[j]);
+					for (let j = i; j < resArr.length; j += 4) {
+						arr.push(resArr[j]);
 					}
 				}
 
-				if (JSON.stringify(this.matrix) !== JSON.stringify(resArr)) {
-					this.matrix = resArr;
-					this.getRandomNumber();
-				}
+				this.randomGeneration(arr)
 			},
-			aaa(arr) {
+			leftCoreCode(arr) {
 				let result = [];
 				for (let i = 0; i < arr.length; i += 4) {
 					let row = arr.slice(i, i + 4);
@@ -211,6 +124,7 @@
 						if (row[i] === row[i + 1]) {
 							row[i] *= 2;
 							row[i + 1] = 0;
+							this.score = this.score + row[i];
 						}
 					}
 
@@ -224,7 +138,7 @@
 				}
 				return result
 			},
-			bbb() {
+			rightCoreCode(arr) {
 				let result = [];
 				for (let i = 0; i < arr.length; i += 4) {
 					let row = arr.slice(i, i + 4);
@@ -239,6 +153,7 @@
 						if (row[i] === row[i - 1]) {
 							row[i] *= 2;
 							row[i - 1] = 0;
+							this.score = this.score + row[i];
 						}
 					}
 
@@ -251,6 +166,12 @@
 					result = result.concat(row);
 				}
 				return result
+			},
+			randomGeneration(arr) {
+				if (JSON.stringify(this.matrix) !== JSON.stringify(arr)) {
+					this.matrix = arr;
+					this.getRandomNumber();
+				}
 			},
 			handleTouchStart(e) {
 				this.startX = e.touches[0].pageX;
@@ -282,6 +203,16 @@
 				}
 			}
 		},
+		watch: {
+			"score": {
+				handler(val) {
+					if (val > this.historyScore) {
+						this.historyScore = val
+						uni.setStorageSync('historyScore', val)
+					}
+				}
+			}
+		}
 	}
 </script>
 <style lang="scss">
@@ -295,6 +226,7 @@
 
 	.container {
 		position: absolute;
+		top: 480rpx;
 		left: 50%;
 		transform: translateX(-50%);
 		display: grid;
@@ -334,6 +266,49 @@
 			transition: top 0.15s, left 0.15s, background-color 0.15s, color 0.15s;
 		}
 	}
+
+	.top {
+		position: absolute;
+		top: 70rpx;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 90%;
+		height: 200rpx;
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		grid-template-rows: repeat(1, 1fr);
+		gap: 20rpx;
+
+		.card {
+			border-radius: 30rpx;
+			height: 200rpx;
+			background-color: rgb(202, 192, 180);
+			color: white;
+			font-size: 36rpx;
+			font-weight: bold;
+			text-align: center;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+
+	.button {
+		position: absolute;
+		top: 300rpx;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 90%;
+		height: 150rpx;
+		background-color: rgb(202, 192, 180);
+		text-align: center;
+		line-height: 150rpx;
+		color: white;
+		font-size: 36rpx;
+		font-weight: bold;
+		border-radius: 20rpx;
+	}
+
 
 	.hide {
 		background-color: transparent !important;
